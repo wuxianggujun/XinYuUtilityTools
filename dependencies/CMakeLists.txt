@@ -2,10 +2,6 @@
 #zlib-cmake
 set(ZLIB_TEST OFF)
 
-# libxlsxwriter
-set(BUILD_TESTS OFF)
-
-
 add_subdirectory(fltk)
 add_subdirectory(zlib-cmake)
 add_subdirectory(libxlsxwriter)
