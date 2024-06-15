@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+
+#include <QStandardItemModel>
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QHBoxLayout>
@@ -13,19 +15,17 @@
 #include <QMenuBar>
 #include <QToolBar>
 #include <QStatusBar>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QSplitter>
+#include <QListView>
 
-
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
-}
-QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-private:
-    void setUpUi();
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
@@ -34,7 +34,9 @@ public:
 private:
     QWidget *centralWidget;
     QMenuBar *mainMenuBar;
+    QSplitter *mainSplitter;
+    QVBoxLayout *mainVBoxLayout;
 private slots:
-    void on_actionExit_triggered();
+    void on_actionOpen_triggered();
 };
 #endif // MAINWINDOW_H
