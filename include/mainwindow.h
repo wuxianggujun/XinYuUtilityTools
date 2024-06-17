@@ -22,6 +22,9 @@
 #include <QTextEdit>
 #include <QTreeView>
 
+#include <QtSql>
+#include <QSqlError>
+#include <QSqlTableModel>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>

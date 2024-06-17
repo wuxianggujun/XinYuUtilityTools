@@ -4,14 +4,21 @@
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
 
-    initialize();
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("XinYuConstructionTable.db");
 
-    // 连接信号槽
-    QMetaObject::connectSlotsByName(this);
+    if (!db.open()) {
+        qDebug() << "无法打开数据库";
+        qDebug() <<db.lastError().text();
+        return;
+    }
+    qDebug() << "Database: connection ok";
+
+    initialize();
 }
 
 MainWindow::~MainWindow() {
-        delete centralWidget;
+    delete centralWidget;
 }
 
 
@@ -33,12 +40,8 @@ void MainWindow::on_listView_clicked(const QModelIndex &index) {
 }
 
 void MainWindow::initialize() {
-    if (objectName().isEmpty()) {
-        setObjectName("MainWindow");
-    }
     resize(800, 600);
     centralWidget = new QWidget(this);
-    centralWidget->setObjectName("centralWidget");
     this->setCentralWidget(centralWidget);
 
     setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
@@ -66,7 +69,6 @@ void MainWindow::initialize() {
     this->setMenuBar(mainMenuBar);
 
     mainVBoxLayout = new QVBoxLayout(centralWidget);
-    mainVBoxLayout->setObjectName("mainVBoxLayout");
 
     mainSplitter = new QSplitter(this);
     mainVBoxLayout->addWidget(mainSplitter);
@@ -97,7 +99,7 @@ void MainWindow::initialize() {
     listview->setSpacing(10);
 
 
-    connect(listview,&QListView::clicked,this,&MainWindow::on_listView_clicked,Qt::DirectConnection);
+    connect(listview, &QListView::clicked, this, &MainWindow::on_listView_clicked, Qt::DirectConnection);
 
     connect(pOpenAction, &QAction::triggered, this, &MainWindow::on_actionOpen_triggered);
     // 连接槽函数
