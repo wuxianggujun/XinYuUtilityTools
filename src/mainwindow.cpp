@@ -9,10 +9,50 @@ MainWindow::MainWindow(QWidget *parent)
 
     if (!db.open()) {
         qDebug() << "无法打开数据库";
-        qDebug() <<db.lastError().text();
+        qDebug() << db.lastError().text();
         return;
     }
     qDebug() << "Database: connection ok";
+
+    QSqlQuery query(db);
+
+// 创建表
+    if (query.exec(
+            "CREATE TABLE IF NOT EXISTS ComplaintsSummary ("
+            "Sequence INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "City VARCHAR(255),"
+            "ComplaintLocation TEXT,"
+            "Longitude DECIMAL(10, 6),"
+            "Latitude DECIMAL(10, 6),"
+            "ComplaintVolume INT,"
+            "ComplaintSource VARCHAR(255),"
+            "ComplaintUserNumber VARCHAR(255),"
+            "SolutionMethod VARCHAR(255),"
+            "Area VARCHAR(255),"
+            "ResolvedStatus BOOLEAN,"
+            "Remarks TEXT,"
+            "ElevatorStop BOOLEAN)")){
+
+        qDebug() << "Table created successfully";
+
+        // 准备插入数据的 SQL 语句
+        query.prepare("INSERT INTO ComplaintsSummary"
+                      " (Sequence, City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
+                      "VALUES(0, '', '', 0, 0, 0, '', '', '', '', 0, '', 0);");
+
+
+
+        if (!query.exec()) {
+            db.commit(); //提交事务
+            qDebug() << "Insertion failed:" << query.lastError().text();
+        } else {
+            db.rollback(); //回滚事务
+            qDebug() << "Insertion successful";
+        }
+
+    } else {
+        qDebug() << "Table creation failed:" << query.lastError().text();
+    }
 
     initialize();
 }
