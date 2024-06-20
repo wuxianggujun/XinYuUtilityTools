@@ -1,6 +1,8 @@
 
 #include "mainwindow.h"
 
+QXLSX_USE_NAMESPACE
+
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
 
@@ -53,9 +55,37 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << "Table creation failed:" << query.lastError().text();
     }
 
-    document = new QXlsx::Document(":file/XinYuConstructionTable.xlsx");
+    document = new Document(":file/XinYuConstructionTable.xlsx");
     if (document->load()) {
         qDebug() << "Excel file loaded successfully";
+
+        if (document->selectSheet("汇总")) {
+            auto cellReference = document->dimension();
+            qDebug() << "Sheet dimension: " << cellReference.toString(); //打印表格大小
+
+            auto* documentWrite = new Document("Test.xlsx");
+            // 打印表格内容
+            for (int i = 1; i <= cellReference.lastRow(); i++) {
+                for (int j = 1; j <= cellReference.lastColumn(); j++) {
+                    auto *cell = document->cellAt(i, j);
+                    if (cell != nullptr) {
+                        auto value = cell->value();
+                        documentWrite->write(i, j, value);//写入单元格内容
+                        qDebug() << "[debug] cell(" << i << "," << j << ") is " << value; //打印单元格内容
+                    }
+                }
+            }
+            if (documentWrite->saveAs("Test.xlsx")) // save the document as 'Test.xlsx'
+            {
+                qDebug() << "[debug] success to write xlsx file";
+            } else {
+                qDebug() << "[debug][error] failed to write xlsx file";
+                exit(-1);
+            }
+
+            qDebug() << "[debug] current directory is " << QDir::currentPath();
+
+        }
     }
 
 
