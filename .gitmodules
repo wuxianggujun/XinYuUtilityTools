@@ -7,3 +7,6 @@
 [submodule "dependencies/zlib-cmake"]
 	path = dependencies/zlib-cmake
 	url = https://github.com/jimmy-park/zlib-cmake.git
+[submodule "dependencies/QXlsx"]
+	path = dependencies/QXlsx
+	url = https://github.com/QtExcel/QXlsx.git
