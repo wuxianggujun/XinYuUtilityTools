@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << "Table creation failed:" << query.lastError().text();
     }
 
-    document = new QXlsx::Document("XinYuConstructionTable.xlsx");
+    document = new QXlsx::Document(":file/XinYuConstructionTable.xlsx");
     if (document->load()) {
         qDebug() << "Excel file loaded successfully";
     }
