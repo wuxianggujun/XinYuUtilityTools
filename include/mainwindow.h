@@ -29,6 +29,17 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 
+//xlsx
+#include <xlsxdocument.h>
+#include <xlsxcellrange.h>
+#include <xlsxworkbook.h>
+#include <xlsxformat.h>
+#include <xlsxchart.h>
+#include <xlsxrichstring.h>
+#include <xlsxconditionalformatting.h>
+#include <xlsxchartsheet.h>
+
+
 class MainWindow : public QMainWindow {
 Q_OBJECT
 
@@ -36,13 +47,18 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
 
     ~MainWindow() override;
+
 private:
-     void initialize();
+    void initialize();
+
 private:
     QWidget *centralWidget;
     QMenuBar *mainMenuBar;
     QSplitter *mainSplitter;
     QVBoxLayout *mainVBoxLayout;
+
+private:
+    QXlsx::Document *document;
 private slots:
 
     void on_actionOpen_triggered();

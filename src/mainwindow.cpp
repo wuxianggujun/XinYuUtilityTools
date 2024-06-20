@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
             "Area VARCHAR(255),"
             "ResolvedStatus BOOLEAN,"
             "Remarks TEXT,"
-            "ElevatorStop BOOLEAN)")){
+            "ElevatorStop BOOLEAN)")) {
 
         qDebug() << "Table created successfully";
 
@@ -39,7 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
         query.prepare("INSERT INTO ComplaintsSummary"
                       " (Sequence, City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
                       "VALUES(0, '', '', 0, 0, 0, '', '', '', '', 0, '', 0);");
-
 
 
         if (!query.exec()) {
@@ -53,6 +52,12 @@ MainWindow::MainWindow(QWidget *parent)
     } else {
         qDebug() << "Table creation failed:" << query.lastError().text();
     }
+
+    document = new QXlsx::Document("XinYuConstructionTable.xlsx");
+    if (document->load()) {
+        qDebug() << "Excel file loaded successfully";
+    }
+
 
     initialize();
 }
