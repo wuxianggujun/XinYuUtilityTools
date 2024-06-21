@@ -54,6 +54,7 @@ public:
 private:
     void initialize();
     void setUpDatabase();
+    void insertData(const QList<QXlsx::Cell*> &cells);
 private:
     QWidget *centralWidget{};
     QMenuBar *mainMenuBar{};
@@ -62,6 +63,7 @@ private:
 
 private:
     QXlsx::Document *document{};
+    QSqlDatabase db{};
 private slots:
     void handleFileOpenAction();
     void handleListViewClick(const QModelIndex &index);

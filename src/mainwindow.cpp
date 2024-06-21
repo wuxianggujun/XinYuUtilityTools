@@ -7,6 +7,8 @@ MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
     setUpDatabase();
 
+    initialize();
+
     auto *excelData = new QList<QList<Cell *>>();
 
     document = new Document(":file/XinYuConstructionTable.xlsx");
@@ -26,18 +28,23 @@ MainWindow::MainWindow(QWidget *parent)
                     auto *cell = document->cellAt(i, j);
                     if (cell != nullptr) {
                         rowData.append(cell);
+
                     } else {
                         rowData.append(nullptr);
                     }
                 }
                 excelData->append(rowData);
+
+                if (i >1) {
+                    insertData(rowData);
+                }
             }
             qDebug() << "[debug] current directory is " << QDir::currentPath();
         }
     }
 
 
-    initialize();
+
 }
 
 MainWindow::~MainWindow() {
@@ -128,7 +135,7 @@ void MainWindow::handleListViewClick(const QModelIndex &index) {
 }
 
 void MainWindow::setUpDatabase() {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("XinYuConstructionTable.db");
 
     if (!db.open()) {
@@ -159,12 +166,6 @@ void MainWindow::setUpDatabase() {
 
         qDebug() << "Table created successfully";
 
-        // 准备插入数据的 SQL 语句
-        query.prepare("INSERT INTO ComplaintsSummary"
-                      " (Sequence, City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
-                      "VALUES(0, '', '', 0, 0, 0, '', '', '', '', 0, '', 0);");
-
-
         if (!query.exec()) {
             db.commit(); //提交事务
             qDebug() << "Insertion failed:" << query.lastError().text();
@@ -175,5 +176,21 @@ void MainWindow::setUpDatabase() {
 
     } else {
         qDebug() << "Table creation failed:" << query.lastError().text();
+    }
+}
+
+void MainWindow::insertData(const QList<QXlsx::Cell *> &cells) {
+    QSqlQuery query(db);
+    // 准备插入数据的 SQL 语句
+    query.prepare("INSERT INTO ComplaintsSummary"
+                  " (City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
+                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+    for (auto cell : cells) {
+        query.addBindValue(cell ? cell->value().toString() : QVariant());
+    }
+    if (!query.exec()) {
+        qDebug() << "Insertion failed:" << query.lastError().text();
+    } else {
+        qDebug() << "Insertion successful";
     }
 }
