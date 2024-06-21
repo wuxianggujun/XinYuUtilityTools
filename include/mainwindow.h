@@ -53,7 +53,7 @@ public:
 
 private:
     void initialize();
-
+    void setUpDatabase();
 private:
     QWidget *centralWidget{};
     QMenuBar *mainMenuBar{};
@@ -63,10 +63,8 @@ private:
 private:
     QXlsx::Document *document{};
 private slots:
-
-    void on_actionOpen_triggered();
-
-    void on_listView_clicked(const QModelIndex &index);
+    void handleFileOpenAction();
+    void handleListViewClick(const QModelIndex &index);
 };
 
 #endif // MAINWINDOW_H

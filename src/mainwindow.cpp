@@ -5,57 +5,9 @@ QXLSX_USE_NAMESPACE
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
+    setUpDatabase();
 
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("XinYuConstructionTable.db");
-
-    if (!db.open()) {
-        qDebug() << "无法打开数据库";
-        qDebug() << db.lastError().text();
-        return;
-    }
-    qDebug() << "Database: connection ok";
-
-    QSqlQuery query(db);
-
-// 创建表
-    if (query.exec(
-            "CREATE TABLE IF NOT EXISTS ComplaintsSummary ("
-            "Sequence INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "City VARCHAR(255),"
-            "ComplaintLocation TEXT,"
-            "Longitude DECIMAL(10, 6),"
-            "Latitude DECIMAL(10, 6),"
-            "ComplaintVolume INT,"
-            "ComplaintSource VARCHAR(255),"
-            "ComplaintUserNumber VARCHAR(255),"
-            "SolutionMethod VARCHAR(255),"
-            "Area VARCHAR(255),"
-            "ResolvedStatus BOOLEAN,"
-            "Remarks TEXT,"
-            "ElevatorStop BOOLEAN)")) {
-
-        qDebug() << "Table created successfully";
-
-        // 准备插入数据的 SQL 语句
-        query.prepare("INSERT INTO ComplaintsSummary"
-                      " (Sequence, City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
-                      "VALUES(0, '', '', 0, 0, 0, '', '', '', '', 0, '', 0);");
-
-
-        if (!query.exec()) {
-            db.commit(); //提交事务
-            qDebug() << "Insertion failed:" << query.lastError().text();
-        } else {
-            db.rollback(); //回滚事务
-            qDebug() << "Insertion successful";
-        }
-
-    } else {
-        qDebug() << "Table creation failed:" << query.lastError().text();
-    }
-
-    auto *excelData = new QList<QList<QVariant>>();
+    auto *excelData = new QList<QList<Cell *>>();
 
     document = new Document(":file/XinYuConstructionTable.xlsx");
     if (document->load()) {
@@ -65,34 +17,22 @@ MainWindow::MainWindow(QWidget *parent)
             auto cellReference = document->dimension();
             qDebug() << "Sheet dimension: " << cellReference.toString(); //打印表格大小
 
-            auto *documentWrite = new Document("Test.xlsx");
+
             // 打印表格内容
             for (int i = 1; i <= cellReference.lastRow(); i++) {
-                QList<QVariant> rowData;
+                QList<Cell *> rowData;
 
                 for (int j = 1; j <= cellReference.lastColumn(); j++) {
                     auto *cell = document->cellAt(i, j);
                     if (cell != nullptr) {
-                        auto value = cell->value();
-                        rowData.append(value);
-                        documentWrite->write(i, j, value);//写入单元格内容
-                        qDebug() << "[debug] cell(" << i << "," << j << ") is " << value; //打印单元格内容
+                        rowData.append(cell);
                     } else {
-                        rowData.append("null");
+                        rowData.append(nullptr);
                     }
                 }
                 excelData->append(rowData);
             }
-            if (documentWrite->saveAs("Test.xlsx")) // save the document as 'Test.xlsx'
-            {
-                qDebug() << "[debug] success to write xlsx file";
-            } else {
-                qDebug() << "[debug][error] failed to write xlsx file";
-                exit(-1);
-            }
-
             qDebug() << "[debug] current directory is " << QDir::currentPath();
-
         }
     }
 
@@ -102,24 +42,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() {
     delete centralWidget;
-}
-
-
-void MainWindow::on_actionOpen_triggered() {
-    QString curPath = QDir::currentPath();
-    QString fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), curPath, tr("所有文件 (*)"));
-    if (!fileName.isEmpty()) {
-        QFile file(fileName);
-        if (file.open(QIODevice::ReadOnly)) {
-            QMessageBox::information(this, tr("文件操作"), tr("文件打开成功！"));
-        }
-    }
-
-}
-
-void MainWindow::on_listView_clicked(const QModelIndex &index) {
-    QString text = index.data().toString();
-    QMessageBox::information(this, tr("列表点击"), tr("你点击了：") + text);
 }
 
 void MainWindow::initialize() {
@@ -182,9 +104,76 @@ void MainWindow::initialize() {
     listview->setSpacing(10);
 
 
-    connect(listview, &QListView::clicked, this, &MainWindow::on_listView_clicked, Qt::DirectConnection);
+    connect(listview, &QListView::clicked, this, &MainWindow::handleListViewClick, Qt::DirectConnection);
 
-    connect(pOpenAction, &QAction::triggered, this, &MainWindow::on_actionOpen_triggered);
+    connect(pOpenAction, &QAction::triggered, this, &MainWindow::handleFileOpenAction);
     // 连接槽函数
     connect(pExitAction, &QAction::triggered, this, &QMainWindow::close);
+}
+
+void MainWindow::handleFileOpenAction() {
+    QString curPath = QDir::currentPath();
+    QString fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), curPath, tr("所有文件 (*)"));
+    if (!fileName.isEmpty()) {
+        QFile file(fileName);
+        if (file.open(QIODevice::ReadOnly)) {
+            QMessageBox::information(this, tr("文件操作"), tr("文件打开成功！"));
+        }
+    }
+}
+
+void MainWindow::handleListViewClick(const QModelIndex &index) {
+    QString text = index.data().toString();
+    QMessageBox::information(this, tr("列表点击"), tr("你点击了：") + text);
+}
+
+void MainWindow::setUpDatabase() {
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("XinYuConstructionTable.db");
+
+    if (!db.open()) {
+        qDebug() << "无法打开数据库";
+        qDebug() << db.lastError().text();
+        return;
+    }
+    qDebug() << "Database: connection ok";
+
+    QSqlQuery query(db);
+
+// 创建表
+    if (query.exec(
+            "CREATE TABLE IF NOT EXISTS ComplaintsSummary ("
+            "Sequence INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "City VARCHAR(255),"
+            "ComplaintLocation TEXT,"
+            "Longitude DECIMAL(10, 6),"
+            "Latitude DECIMAL(10, 6),"
+            "ComplaintVolume INT,"
+            "ComplaintSource VARCHAR(255),"
+            "ComplaintUserNumber VARCHAR(255),"
+            "SolutionMethod VARCHAR(255),"
+            "Area VARCHAR(255),"
+            "ResolvedStatus BOOLEAN,"
+            "Remarks TEXT,"
+            "ElevatorStop BOOLEAN)")) {
+
+        qDebug() << "Table created successfully";
+
+        // 准备插入数据的 SQL 语句
+        query.prepare("INSERT INTO ComplaintsSummary"
+                      " (Sequence, City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
+                      "VALUES(0, '', '', 0, 0, 0, '', '', '', '', 0, '', 0);");
+
+
+        if (!query.exec()) {
+            db.commit(); //提交事务
+            qDebug() << "Insertion failed:" << query.lastError().text();
+        } else {
+            db.rollback(); //回滚事务
+            qDebug() << "Insertion successful";
+        }
+
+    } else {
+        qDebug() << "Table creation failed:" << query.lastError().text();
+    }
 }
