@@ -55,6 +55,8 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << "Table creation failed:" << query.lastError().text();
     }
 
+    auto *excelData = new QList<QList<QVariant>>();
+
     document = new Document(":file/XinYuConstructionTable.xlsx");
     if (document->load()) {
         qDebug() << "Excel file loaded successfully";
@@ -63,17 +65,23 @@ MainWindow::MainWindow(QWidget *parent)
             auto cellReference = document->dimension();
             qDebug() << "Sheet dimension: " << cellReference.toString(); //打印表格大小
 
-            auto* documentWrite = new Document("Test.xlsx");
+            auto *documentWrite = new Document("Test.xlsx");
             // 打印表格内容
             for (int i = 1; i <= cellReference.lastRow(); i++) {
+                QList<QVariant> rowData;
+
                 for (int j = 1; j <= cellReference.lastColumn(); j++) {
                     auto *cell = document->cellAt(i, j);
                     if (cell != nullptr) {
                         auto value = cell->value();
+                        rowData.append(value);
                         documentWrite->write(i, j, value);//写入单元格内容
                         qDebug() << "[debug] cell(" << i << "," << j << ") is " << value; //打印单元格内容
+                    } else {
+                        rowData.append("null");
                     }
                 }
+                excelData->append(rowData);
             }
             if (documentWrite->saveAs("Test.xlsx")) // save the document as 'Test.xlsx'
             {

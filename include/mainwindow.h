@@ -1,6 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QList>
+#include <QString>
+#include <QStringList>
 #include <QStandardItemModel>
 #include <QVariant>
 #include <QApplication>
@@ -52,13 +55,13 @@ private:
     void initialize();
 
 private:
-    QWidget *centralWidget;
-    QMenuBar *mainMenuBar;
-    QSplitter *mainSplitter;
-    QVBoxLayout *mainVBoxLayout;
+    QWidget *centralWidget{};
+    QMenuBar *mainMenuBar{};
+    QSplitter *mainSplitter{};
+    QVBoxLayout *mainVBoxLayout{};
 
 private:
-    QXlsx::Document *document;
+    QXlsx::Document *document{};
 private slots:
 
     void on_actionOpen_triggered();
