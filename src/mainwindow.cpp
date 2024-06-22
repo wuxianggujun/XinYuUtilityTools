@@ -5,46 +5,9 @@ QXLSX_USE_NAMESPACE
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
-    setUpDatabase();
+    //setUpDatabase();
 
     initialize();
-
-    auto *excelData = new QList<QList<Cell *>>();
-
-    document = new Document(":file/XinYuConstructionTable.xlsx");
-    if (document->load()) {
-        qDebug() << "Excel file loaded successfully";
-
-        if (document->selectSheet("汇总")) {
-            auto cellReference = document->dimension();
-            qDebug() << "Sheet dimension: " << cellReference.toString(); //打印表格大小
-
-
-            // 打印表格内容
-            for (int i = 1; i <= cellReference.lastRow(); i++) {
-                QList<Cell *> rowData;
-
-                for (int j = 1; j <= cellReference.lastColumn(); j++) {
-                    auto *cell = document->cellAt(i, j);
-                    if (cell != nullptr) {
-                        rowData.append(cell);
-
-                    } else {
-                        rowData.append(nullptr);
-                    }
-                }
-                excelData->append(rowData);
-
-                if (i >1) {
-                    insertData(rowData);
-                }
-            }
-            qDebug() << "[debug] current directory is " << QDir::currentPath();
-        }
-    }
-
-
-
 }
 
 MainWindow::~MainWindow() {
@@ -85,33 +48,79 @@ void MainWindow::initialize() {
     mainSplitter = new QSplitter(this);
     mainVBoxLayout->addWidget(mainSplitter);
 
-    auto *listview = new QListView();
-    auto *treeview = new QTreeView();
-    auto *textedit = new QTextEdit();
-    mainSplitter->addWidget(listview);
-    mainSplitter->addWidget(treeview);
-    mainSplitter->addWidget(textedit);
+    auto *listView = new QListView();
+    auto *tableView = new QTableView();
+    mainSplitter->addWidget(listView);
+    mainSplitter->addWidget(tableView);
     mainSplitter->show();
+
+    listView->hide();
 
     centralWidget->setLayout(mainVBoxLayout);
 
+
+    model = new QStandardItemModel();
+    // 创建跟项
+    auto *rootItem = model->invisibleRootItem();
+
+    document = new Document(":file/XinYuConstructionTable.xlsx");
+    if (document->load()) {
+        qDebug() << "Excel file loaded successfully";
+
+        if (document->selectSheet("汇总")) {
+            // 获取表格的行列数
+            auto cellReference = document->dimension();
+            model->setRowCount(cellReference.lastRow());
+            model->setColumnCount(cellReference.lastColumn());
+
+            // 打印表格内容
+            for (int i = 1; i <= cellReference.lastRow(); i++) {
+                for (int j = 1; j <= cellReference.lastColumn(); j++) {
+                    auto *cell = document->cellAt(i, j);
+                    if (cell != nullptr) {
+                        auto value = cell->value();
+                        auto *item = new QStandardItem(value.toString());
+                        auto format = cell->format();
+                        auto bgColor = cell->format().patternBackgroundColor();
+                        if (bgColor.isValid()) {
+                            item->setBackground(bgColor); // 设置单元格背景色
+                        }
+
+                        auto textColor = cell->format().patternForegroundColor();
+                        if (textColor.isValid()) {
+                            item->setForeground(textColor); // 设置单元格字体颜色
+                        }
+
+                        if (format.hasFontData()) {
+                            item->setFont(format.font()); // 设置单元格字体
+                        }
+
+                        model->setItem(i - 1, j - 1, item);
+                    }
+                }
+
+            }
+        }
+    }
+
+    tableView->setModel(model);
 
     QStringList stringList;
     stringList << "Item1" << "Item2" << "Item3";
 
     auto *stringListModel = new QStringListModel();
     stringListModel->setStringList(stringList);
-    listview->setModel(stringListModel);
-    listview->setSelectionMode(QAbstractItemView::SingleSelection);
+    listView->setModel(stringListModel);
+    listView->setSelectionMode(QAbstractItemView::SingleSelection);
     //设置列表不能编辑
-    listview->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     //设置列表不能被睡意拖动
-    listview->setMovement(QListView::Static);
+    listView->setMovement(QListView::Static);
     //设置列表间隔
-    listview->setSpacing(10);
+    listView->setSpacing(10);
 
 
-    connect(listview, &QListView::clicked, this, &MainWindow::handleListViewClick, Qt::DirectConnection);
+    connect(listView, &QListView::clicked, this, &MainWindow::handleListViewClick, Qt::DirectConnection);
 
     connect(pOpenAction, &QAction::triggered, this, &MainWindow::handleFileOpenAction);
     // 连接槽函数
@@ -185,7 +194,7 @@ void MainWindow::insertData(const QList<QXlsx::Cell *> &cells) {
     query.prepare("INSERT INTO ComplaintsSummary"
                   " (City, ComplaintLocation, Longitude, Latitude, ComplaintVolume, ComplaintSource, ComplaintUserNumber, SolutionMethod, Area, ResolvedStatus, Remarks, ElevatorStop) "
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
-    for (auto cell : cells) {
+    for (auto cell: cells) {
         query.addBindValue(cell ? cell->value().toString() : QVariant());
     }
     if (!query.exec()) {
@@ -193,4 +202,9 @@ void MainWindow::insertData(const QList<QXlsx::Cell *> &cells) {
     } else {
         qDebug() << "Insertion successful";
     }
+}
+
+void MainWindow::insertModelData() {
+
+
 }

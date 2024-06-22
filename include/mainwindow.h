@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QWidget>
+#include <QTableView>
 #include <QMainWindow>
 #include <QDebug>
 #include <QtCore>
@@ -53,8 +54,15 @@ public:
 
 private:
     void initialize();
+
     void setUpDatabase();
-    void insertData(const QList<QXlsx::Cell*> &cells);
+
+    void insertData(const QList<QXlsx::Cell *> &cells);
+
+    void insertModelData();
+
+    void loadExcelFile(const QString &filePath,const QStandardItemModel *model);
+
 private:
     QWidget *centralWidget{};
     QMenuBar *mainMenuBar{};
@@ -64,8 +72,11 @@ private:
 private:
     QXlsx::Document *document{};
     QSqlDatabase db{};
+    QStandardItemModel *model{};
 private slots:
+
     void handleFileOpenAction();
+
     void handleListViewClick(const QModelIndex &index);
 };
 
