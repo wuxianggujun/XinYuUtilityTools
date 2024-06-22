@@ -32,6 +32,10 @@ void MainWindow::initialize() {
     pFileMenu->addAction(pSaveAction);
     auto *pSaveAsAction = new QAction("Save As", this);
     pFileMenu->addAction(pSaveAsAction);
+
+    auto *pExportKmlAction = new QAction("Export KML", this);
+    pFileMenu->addAction(pExportKmlAction);
+
     pFileMenu->addSeparator();
     auto *pExitAction = new QAction("Exit", this);
     pFileMenu->addAction(pExitAction);
@@ -87,7 +91,7 @@ void MainWindow::initialize() {
                             if (isDoubleValue) {
                                 item = new QStandardItem(QString::number(doubleValue, 'f', 6));
                                 qDebug() << doubleValue;
-                            }else {
+                            } else {
                                 item = new QStandardItem(value.toString());
                             }
                         } else {
@@ -137,8 +141,11 @@ void MainWindow::initialize() {
     connect(listView, &QListView::clicked, this, &MainWindow::handleListViewClick, Qt::DirectConnection);
 
     connect(pOpenAction, &QAction::triggered, this, &MainWindow::handleFileOpenAction);
+
+    connect(pExportKmlAction, &QAction::triggered, this, &MainWindow::handlerXlsxToKmlAction);
     // 连接槽函数
     connect(pExitAction, &QAction::triggered, this, &QMainWindow::close);
+
 }
 
 void MainWindow::handleFileOpenAction() {
@@ -221,4 +228,55 @@ void MainWindow::insertData(const QList<QXlsx::Cell *> &cells) {
 void MainWindow::insertModelData() {
 
 
+}
+
+void MainWindow::handlerXlsxToKmlAction() {
+    const char *kmlPath = "./XinYuConstructionTable.kml";
+
+    tinyxml2::XMLDocument doc;
+
+    // 添加XML声明
+    auto* decl = doc.NewDeclaration("xml version=\"1.0\" encoding=\"UTF-8\"");
+    doc.InsertFirstChild(decl);
+
+    auto * kml = doc.NewElement("kml");
+    kml->SetAttribute("xmlns", "http://www.opengis.net/kml/2.2");
+    doc.InsertEndChild(kml);
+
+    // 创建Document元素
+    auto* documentElement = doc.NewElement("Document");
+    kml->InsertEndChild(documentElement);
+
+    for (int i = 1; i < model->rowCount(); i++) {
+        auto name = model->item(i, 2)->text();
+//        auto description = model->item(i, )->text();
+        auto longitude = model->item(i, 3)->text();
+        auto latitude = model->item(i, 4)->text();
+
+        auto* placemark = doc.NewElement("Placemark");
+        documentElement->InsertEndChild(placemark);
+
+        auto* nameElement = doc.NewElement("name");
+        nameElement->SetText(name.toStdString().c_str());
+        placemark->InsertEndChild(nameElement);
+
+   /*     auto* descriptionElement = doc.NewElement("description");
+        descriptionElement->SetText(description.toStdString().c_str());
+        placemark->InsertEndChild(descriptionElement);*/
+
+        auto* point = doc.NewElement("Point");
+        placemark->InsertEndChild(point);
+
+        auto* coordinates = doc.NewElement("coordinates");
+        QString coordString = QString("%1,%2,0").arg(longitude).arg(latitude);
+        coordinates->SetText(coordString.toStdString().c_str());
+        point->InsertEndChild(coordinates);
+    }
+
+    tinyxml2::XMLError result = doc.SaveFile(kmlPath);
+    if (result != tinyxml2::XML_SUCCESS) {
+        qDebug() << "Failed to save KML file: " << result;
+        return;
+    }
+    qDebug() << "KML file saved successfully";
 }

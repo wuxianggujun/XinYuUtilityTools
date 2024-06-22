@@ -43,6 +43,9 @@
 #include <xlsxconditionalformatting.h>
 #include <xlsxchartsheet.h>
 
+// TinyXML2
+#include <tinyxml2.h>
+
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
@@ -63,6 +66,7 @@ private:
 
     void loadExcelFile(const QString &filePath,const QStandardItemModel *model);
 
+
 private:
     QWidget *centralWidget{};
     QMenuBar *mainMenuBar{};
@@ -74,6 +78,8 @@ private:
     QSqlDatabase db{};
     QStandardItemModel *model{};
 private slots:
+
+    void handlerXlsxToKmlAction();
 
     void handleFileOpenAction();
 
