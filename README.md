@@ -1,4 +1,5 @@
 # XinYuUtilityTools
 
-发现使用xmake的话需要的库都可以自动下载，不需要手动下载。并且如果打包exe的xpack比cmake的cpack方便多了，不需要我配置一大堆切资料较少没什么教程。所以打算备份一个cmake分支之后全部切换到xmake。
-如果有需要的用户可以使用cmake分支，但不会维护只是备份一下。
+This is a collection of utility tools for XinYu.
+这是一个小工具，用于辅助我在XinYu工作时候的工具。比如生成KML地图格式的坐标点用来更新我的建设表数据情况。
+<img src="./image/img.png">
