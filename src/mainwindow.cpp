@@ -67,6 +67,7 @@ void MainWindow::initialize() {
     if (document->load()) {
         qDebug() << "Excel file loaded successfully";
 
+        // 选择工作表
         if (document->selectSheet("汇总")) {
             // 获取表格的行列数
             auto cellReference = document->dimension();
@@ -79,7 +80,20 @@ void MainWindow::initialize() {
                     auto *cell = document->cellAt(i, j);
                     if (cell != nullptr) {
                         auto value = cell->value();
-                        auto *item = new QStandardItem(value.toString());
+                        bool isDoubleValue = false;
+                        QStandardItem *item = nullptr;
+                        if (j == 4 || j == 5) {
+                            double doubleValue = value.toDouble(&isDoubleValue);
+                            if (isDoubleValue) {
+                                item = new QStandardItem(QString::number(doubleValue, 'f', 6));
+                                qDebug() << doubleValue;
+                            }else {
+                                item = new QStandardItem(value.toString());
+                            }
+                        } else {
+                            item = new QStandardItem(value.toString());
+                        }
+
                         auto format = cell->format();
                         auto bgColor = cell->format().patternBackgroundColor();
                         if (bgColor.isValid()) {

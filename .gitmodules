@@ -10,3 +10,6 @@
 [submodule "dependencies/QXlsx"]
 	path = dependencies/QXlsx
 	url = https://github.com/QtExcel/QXlsx.git
+[submodule "dependencies/tinyxml2"]
+	path = dependencies/tinyxml2
+	url = https://github.com/leethomason/tinyxml2.git
