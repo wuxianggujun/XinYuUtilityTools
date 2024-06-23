@@ -64,8 +64,12 @@ void MainWindow::initialize() {
 
 
     model = new QStandardItemModel();
-    // 创建跟项
-    auto *rootItem = model->invisibleRootItem();
+
+    progressDialog = new QProgressDialog(this);
+    progressDialog->setWindowTitle(tr("Loading..."));
+    progressDialog->setLabelText(tr("Loading data from Excel file..."));
+    progressDialog->setWindowModality(Qt::WindowModal);
+    progressDialog->setMinimumDuration(0);
 
     document = new Document(":file/XinYuConstructionTable.xlsx");
     if (document->load()) {
@@ -78,6 +82,7 @@ void MainWindow::initialize() {
             model->setRowCount(cellReference.lastRow());
             model->setColumnCount(cellReference.lastColumn());
 
+            progressDialog->setRange(0, cellReference.lastRow());
             // 找到经纬度所在的列
             int longitudeColumn = -1;
             int latitudeColumn = -1;
@@ -116,7 +121,11 @@ void MainWindow::initialize() {
                         model->setItem(i - 1, j - 1, item);
                     }
                 }
-
+                progressDialog->setValue(i);
+                QCoreApplication::processEvents();
+                if (progressDialog->wasCanceled()) {
+                    break;
+                }
             }
         }
     }

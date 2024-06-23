@@ -25,6 +25,7 @@
 #include <QListView>
 #include <QTextEdit>
 #include <QTreeView>
+#include <QProgressdialog>
 
 #include <QtSql>
 #include <QSqlError>
@@ -72,11 +73,13 @@ private:
     QMenuBar *mainMenuBar{};
     QSplitter *mainSplitter{};
     QVBoxLayout *mainVBoxLayout{};
+    QProgressDialog *progressDialog{};
 
 private:
     QXlsx::Document *document{};
     QSqlDatabase db{};
     QStandardItemModel *model{};
+
 private slots:
 
     void handlerXlsxToKmlAction();
