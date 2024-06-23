@@ -64,9 +64,9 @@ private:
 
     void insertModelData();
 
-    void loadExcelFile(const QString &filePath,const QStandardItemModel *model);
+    void loadExcelFile(const QString &filePath, const QStandardItemModel *model);
 
-
+    bool convertLatitudeLongitudeColumns(QVariant& value,int column,int &latitudeColumn, int &longitudeColumn,double &doubleValue);
 private:
     QWidget *centralWidget{};
     QMenuBar *mainMenuBar{};

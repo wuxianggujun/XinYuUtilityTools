@@ -78,32 +78,32 @@ void MainWindow::initialize() {
             model->setRowCount(cellReference.lastRow());
             model->setColumnCount(cellReference.lastColumn());
 
+            // 找到经纬度所在的列
+            int longitudeColumn = -1;
+            int latitudeColumn = -1;
             // 打印表格内容
             for (int i = 1; i <= cellReference.lastRow(); i++) {
                 for (int j = 1; j <= cellReference.lastColumn(); j++) {
                     auto *cell = document->cellAt(i, j);
                     if (cell != nullptr) {
+                        if (cell->value().toString().contains("经度")) {
+                            longitudeColumn = j;
+                        } else if (cell->value().toString().contains("纬度")) {
+                            latitudeColumn = j;
+                        }
                         auto value = cell->value();
-                        bool isDoubleValue = false;
                         QStandardItem *item = nullptr;
-                        if (j == 4 || j == 5) {
-                            double doubleValue = value.toDouble(&isDoubleValue);
-                            if (isDoubleValue) {
-                                item = new QStandardItem(QString::number(doubleValue, 'f', 6));
-                                qDebug() << doubleValue;
-                            } else {
-                                item = new QStandardItem(value.toString());
-                            }
+                        double doubleValue{};
+                        if (convertLatitudeLongitudeColumns(value, j, latitudeColumn, longitudeColumn, doubleValue)) {
+                            item = new QStandardItem(QString::number(doubleValue, 'f', 6));
                         } else {
                             item = new QStandardItem(value.toString());
                         }
-
                         auto format = cell->format();
                         auto bgColor = cell->format().patternBackgroundColor();
                         if (bgColor.isValid()) {
                             item->setBackground(bgColor); // 设置单元格背景色
                         }
-
                         auto textColor = cell->format().patternForegroundColor();
                         if (textColor.isValid()) {
                             item->setForeground(textColor); // 设置单元格字体颜色
@@ -236,15 +236,15 @@ void MainWindow::handlerXlsxToKmlAction() {
     tinyxml2::XMLDocument doc;
 
     // 添加XML声明
-    auto* decl = doc.NewDeclaration("xml version=\"1.0\" encoding=\"UTF-8\"");
+    auto *decl = doc.NewDeclaration("xml version=\"1.0\" encoding=\"UTF-8\"");
     doc.InsertFirstChild(decl);
 
-    auto * kml = doc.NewElement("kml");
+    auto *kml = doc.NewElement("kml");
     kml->SetAttribute("xmlns", "http://www.opengis.net/kml/2.2");
     doc.InsertEndChild(kml);
 
     // 创建Document元素
-    auto* documentElement = doc.NewElement("Document");
+    auto *documentElement = doc.NewElement("Document");
     kml->InsertEndChild(documentElement);
 
     for (int i = 1; i < model->rowCount(); i++) {
@@ -253,30 +253,44 @@ void MainWindow::handlerXlsxToKmlAction() {
         auto longitude = model->item(i, 3)->text();
         auto latitude = model->item(i, 4)->text();
 
-        auto* placemark = doc.NewElement("Placemark");
+        auto *placemark = doc.NewElement("Placemark");
         documentElement->InsertEndChild(placemark);
 
-        auto* nameElement = doc.NewElement("name");
+        auto *nameElement = doc.NewElement("name");
         nameElement->SetText(name.toStdString().c_str());
         placemark->InsertEndChild(nameElement);
 
-   /*     auto* descriptionElement = doc.NewElement("description");
-        descriptionElement->SetText(description.toStdString().c_str());
-        placemark->InsertEndChild(descriptionElement);*/
+        /*     auto* descriptionElement = doc.NewElement("description");
+             descriptionElement->SetText(description.toStdString().c_str());
+             placemark->InsertEndChild(descriptionElement);*/
 
-        auto* point = doc.NewElement("Point");
+        auto *point = doc.NewElement("Point");
         placemark->InsertEndChild(point);
 
-        auto* coordinates = doc.NewElement("coordinates");
+        auto *coordinates = doc.NewElement("coordinates");
         QString coordString = QString("%1,%2,0").arg(longitude).arg(latitude);
         coordinates->SetText(coordString.toStdString().c_str());
         point->InsertEndChild(coordinates);
     }
-
     tinyxml2::XMLError result = doc.SaveFile(kmlPath);
     if (result != tinyxml2::XML_SUCCESS) {
         qDebug() << "Failed to save KML file: " << result;
         return;
     }
     qDebug() << "KML file saved successfully";
+}
+
+
+bool MainWindow::convertLatitudeLongitudeColumns(QVariant &value, int column, int &latitudeColumn,
+                                                 int &longitudeColumn, double &doubleValue) {
+    bool isDoubleValue = false;
+    if (column == longitudeColumn || column == latitudeColumn) {
+        // 移除经纬度中的空格和度数符号
+        QString strValue = value.toString().trimmed().remove(QChar(0x00B0));
+        if (strValue.contains('.')) {
+            doubleValue = strValue.toDouble(&isDoubleValue);
+        }
+        return isDoubleValue;
+    }
+    return isDoubleValue;
 }
