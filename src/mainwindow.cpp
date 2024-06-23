@@ -3,6 +3,9 @@
 
 QXLSX_USE_NAMESPACE
 
+int MainWindow::longitudeColumn = 0;
+int MainWindow::latitudeColumn = 0;
+
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
     //setUpDatabase();
@@ -83,23 +86,23 @@ void MainWindow::initialize() {
             model->setColumnCount(cellReference.lastColumn());
 
             progressDialog->setRange(0, cellReference.lastRow());
-            // 找到经纬度所在的列
-            int longitudeColumn = -1;
-            int latitudeColumn = -1;
+
             // 打印表格内容
             for (int i = 1; i <= cellReference.lastRow(); i++) {
                 for (int j = 1; j <= cellReference.lastColumn(); j++) {
                     auto *cell = document->cellAt(i, j);
                     if (cell != nullptr) {
                         if (cell->value().toString().contains("经度")) {
-                            longitudeColumn = j;
+                            MainWindow::longitudeColumn = j;
                         } else if (cell->value().toString().contains("纬度")) {
-                            latitudeColumn = j;
+                            MainWindow::latitudeColumn = j;
                         }
+
+                        qDebug() << "Cell(" << i << "," << j << ") = " << MainWindow::longitudeColumn << "," << MainWindow::latitudeColumn;
                         auto value = cell->value();
                         QStandardItem *item = nullptr;
                         double doubleValue{};
-                        if (convertLatitudeLongitudeColumns(value, j, latitudeColumn, longitudeColumn, doubleValue)) {
+                        if (convertLatitudeLongitudeColumns(value, j, doubleValue)) {
                             item = new QStandardItem(QString::number(doubleValue, 'f', 6));
                         } else {
                             item = new QStandardItem(value.toString());
@@ -257,16 +260,22 @@ void MainWindow::handlerXlsxToKmlAction() {
     kml->InsertEndChild(documentElement);
 
     for (int i = 1; i < model->rowCount(); i++) {
-        auto name = model->item(i, 2)->text();
-//        auto description = model->item(i, )->text();
-        auto longitude = model->item(i, 3)->text();
-        auto latitude = model->item(i, 4)->text();
+        auto nameItem = model->item(i, 2);
+
+        auto longitudeItem = model->item(i, MainWindow::longitudeColumn-1);
+        auto latitudeItem = model->item(i, MainWindow::latitudeColumn-1);
+
+        // 检查是否有无效的项
+        if (!nameItem || !longitudeItem || !latitudeItem) {
+            qDebug() << "第" << i << "行有无效项";
+            continue; // 跳过无效行
+        }
 
         auto *placemark = doc.NewElement("Placemark");
         documentElement->InsertEndChild(placemark);
 
         auto *nameElement = doc.NewElement("name");
-        nameElement->SetText(name.toStdString().c_str());
+        nameElement->SetText(nameItem->text().toStdString().c_str());
         placemark->InsertEndChild(nameElement);
 
         /*     auto* descriptionElement = doc.NewElement("description");
@@ -277,7 +286,7 @@ void MainWindow::handlerXlsxToKmlAction() {
         placemark->InsertEndChild(point);
 
         auto *coordinates = doc.NewElement("coordinates");
-        QString coordString = QString("%1,%2,0").arg(longitude).arg(latitude);
+        QString coordString = QString("%1,%2,0").arg(longitudeItem->text()).arg(latitudeItem->text());
         coordinates->SetText(coordString.toStdString().c_str());
         point->InsertEndChild(coordinates);
     }
@@ -290,10 +299,9 @@ void MainWindow::handlerXlsxToKmlAction() {
 }
 
 
-bool MainWindow::convertLatitudeLongitudeColumns(QVariant &value, int column, int &latitudeColumn,
-                                                 int &longitudeColumn, double &doubleValue) {
+bool MainWindow::convertLatitudeLongitudeColumns(QVariant &value, int column, double &doubleValue) {
     bool isDoubleValue = false;
-    if (column == longitudeColumn || column == latitudeColumn) {
+    if (column == MainWindow::longitudeColumn || column == MainWindow::latitudeColumn) {
         // 移除经纬度中的空格和度数符号
         QString strValue = value.toString().trimmed().remove(QChar(0x00B0));
         if (strValue.contains('.')) {

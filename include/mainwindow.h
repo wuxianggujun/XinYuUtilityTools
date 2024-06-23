@@ -67,18 +67,7 @@ private:
 
     void loadExcelFile(const QString &filePath, const QStandardItemModel *model);
 
-    bool convertLatitudeLongitudeColumns(QVariant& value,int column,int &latitudeColumn, int &longitudeColumn,double &doubleValue);
-private:
-    QWidget *centralWidget{};
-    QMenuBar *mainMenuBar{};
-    QSplitter *mainSplitter{};
-    QVBoxLayout *mainVBoxLayout{};
-    QProgressDialog *progressDialog{};
-
-private:
-    QXlsx::Document *document{};
-    QSqlDatabase db{};
-    QStandardItemModel *model{};
+    bool convertLatitudeLongitudeColumns(QVariant& value,int column,double &doubleValue);
 
 private slots:
 
@@ -87,6 +76,21 @@ private slots:
     void handleFileOpenAction();
 
     void handleListViewClick(const QModelIndex &index);
+
+private:
+    QWidget *centralWidget{};
+    QMenuBar *mainMenuBar{};
+    QSplitter *mainSplitter{};
+    QVBoxLayout *mainVBoxLayout{};
+    QProgressDialog *progressDialog{};
+    QXlsx::Document *document{};
+    QSqlDatabase db{};
+    QStandardItemModel *model{};
+
+    // 找到经纬度所在的列
+    static int longitudeColumn;
+    static int latitudeColumn;
+
 };
 
 #endif // MAINWINDOW_H
