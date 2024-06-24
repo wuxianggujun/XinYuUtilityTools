@@ -8,8 +8,6 @@ int MainWindow::latitudeColumn = 0;
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent) {
-    //setUpDatabase();
-
     initialize();
 }
 
