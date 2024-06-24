@@ -98,7 +98,6 @@ void MainWindow::initialize() {
                             MainWindow::latitudeColumn = j;
                         }
 
-                        qDebug() << "Cell(" << i << "," << j << ") = " << MainWindow::longitudeColumn << "," << MainWindow::latitudeColumn;
                         auto value = cell->value();
                         QStandardItem *item = nullptr;
                         double doubleValue{};
@@ -153,6 +152,8 @@ void MainWindow::initialize() {
     connect(listView, &QListView::clicked, this, &MainWindow::handleListViewClick, Qt::DirectConnection);
 
     connect(pOpenAction, &QAction::triggered, this, &MainWindow::handleFileOpenAction);
+
+    connect(pSaveAsAction, &QAction::triggered, this, &MainWindow::handleFileSaveAsAction);
 
     connect(pExportKmlAction, &QAction::triggered, this, &MainWindow::handlerXlsxToKmlAction);
     // 连接槽函数
@@ -259,11 +260,11 @@ void MainWindow::handlerXlsxToKmlAction() {
     auto *documentElement = doc.NewElement("Document");
     kml->InsertEndChild(documentElement);
 
-    for (int i = 1; i < model->rowCount(); i++) {
+    for (int i = 0; i < model->rowCount(); i++) {
         auto nameItem = model->item(i, 2);
 
-        auto longitudeItem = model->item(i, MainWindow::longitudeColumn-1);
-        auto latitudeItem = model->item(i, MainWindow::latitudeColumn-1);
+        auto longitudeItem = model->item(i, MainWindow::longitudeColumn - 1);
+        auto latitudeItem = model->item(i, MainWindow::latitudeColumn - 1);
 
         // 检查是否有无效的项
         if (!nameItem || !longitudeItem || !latitudeItem) {
@@ -310,4 +311,35 @@ bool MainWindow::convertLatitudeLongitudeColumns(QVariant &value, int column, do
         return isDoubleValue;
     }
     return isDoubleValue;
+}
+
+void MainWindow::handleFileSaveAsAction() {
+    QString fileName = QFileDialog::getSaveFileName(this, tr("保存文件"), QDir::currentPath(),
+                                                    tr("XLSX Files (*.xlsx);;All Files (*)"));
+    if (!fileName.isEmpty()) {
+        if (!fileName.endsWith(".xlsx", Qt::CaseInsensitive)) {
+            fileName += ".xlsx";
+        }
+        saveXlsx(fileName);
+    }
+}
+
+void MainWindow::saveXlsx(const QString &fileName) {
+    qDebug() << "Saving to file: " << fileName;
+    auto documentWrite = new Document(fileName);
+    for (int i = 0; i < model->rowCount(); i++) {
+        for (int j = 0; j < model->columnCount(); j++) {
+            auto item = model->item(i, j);
+            if (item) {
+                documentWrite->write(i+1, j+1, item->text());
+                qDebug() << "Saving item: " << item->text();
+            }
+        }
+    }
+    if (documentWrite->save()) {
+        qDebug() << "File saved successfully";
+    } else {
+        qDebug() << "Failed to save file: " << documentWrite;
+    }
+
 }

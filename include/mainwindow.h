@@ -69,10 +69,14 @@ private:
 
     bool convertLatitudeLongitudeColumns(QVariant& value,int column,double &doubleValue);
 
+    void saveXlsx(const QString &fileName);
 private slots:
 
+    void handleFileSaveAsAction();
+    // 导出文件为KML
     void handlerXlsxToKmlAction();
 
+    // 打开文件
     void handleFileOpenAction();
 
     void handleListViewClick(const QModelIndex &index);
